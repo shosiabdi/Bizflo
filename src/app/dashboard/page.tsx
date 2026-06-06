@@ -17,6 +17,17 @@ export default function Dashboard() {
       if (!user) { router.push('/login'); return }
       setUser(user)
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.subscribed) {
+        router.push('/pricing')
+        return
+      }
+
       const { data: customers } = await supabase
         .from('customers')
         .select('*')
@@ -117,7 +128,6 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-y-auto p-6">
 
-          {/* Stats */}
           <div className="grid grid-cols-4 gap-3 mb-5">
             {[
               { label: 'Total customers', value: customers.length, change: 'All time', warn: false },
@@ -134,8 +144,6 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
-
-            {/* Recent customers */}
             <div className="bg-white/4 border border-white/6 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/6">
                 <h2 className="text-white text-sm font-medium">Recent customers</h2>
@@ -163,7 +171,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Recent invoices */}
             <div className="bg-white/4 border border-white/6 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/6">
                 <h2 className="text-white text-sm font-medium">Recent invoices</h2>
@@ -196,7 +203,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick actions */}
           <div className="bg-white/4 border border-white/6 rounded-xl p-4">
             <h2 className="text-white text-sm font-medium mb-3">Quick actions</h2>
             <div className="grid grid-cols-4 gap-3">
