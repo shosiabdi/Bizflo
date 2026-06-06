@@ -8,14 +8,13 @@ const supabase = createClient(
 
 export async function POST(
   req: Request,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
+    const { key: webhookKey } = await params
     const body = await req.json()
     const { event, email, name, plan, amount } = body
-    const webhookKey = params.key
 
-    // Find the owner by webhook key
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -27,7 +26,6 @@ export async function POST(
     }
 
     if (event === 'user.created') {
-      // Create customer
       const { data: customer, error: customerError } = await supabase
         .from('customers')
         .insert({
@@ -46,7 +44,6 @@ export async function POST(
         return NextResponse.json({ error: customerError.message }, { status: 500 })
       }
 
-      // Create first invoice
       const dueDate = new Date()
       dueDate.setMonth(dueDate.getMonth() + 1)
       dueDate.setDate(1)
@@ -59,7 +56,6 @@ export async function POST(
         status: 'pending'
       })
 
-      // Send welcome email
       await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,7 +77,6 @@ export async function POST(
     }
 
     if (event === 'payment.received') {
-      // Mark latest invoice as paid
       const { data: invoices } = await supabase
         .from('invoices')
         .select('*')
@@ -101,7 +96,6 @@ export async function POST(
     }
 
     if (event === 'subscription.cancelled') {
-      // Update customer status
       await supabase
         .from('customers')
         .update({ status: 'cancelled' })
